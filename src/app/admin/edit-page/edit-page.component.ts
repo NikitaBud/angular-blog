@@ -5,6 +5,7 @@ import {switchMap} from 'rxjs/operators';
 import {Post} from '../../shared/interface';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
+import {AlertService} from '../shared/services/alert.service';
 
 @Component({
   selector: 'app-edit-page',
@@ -13,50 +14,52 @@ import {Subscription} from 'rxjs';
 })
 export class EditPageComponent implements OnInit, OnDestroy {
 
-  form: FormGroup
-  post: Post
-  submitted = false
+  form: FormGroup;
+  post: Post;
+  submitted = false;
 
-  uSub: Subscription
+  uSub: Subscription;
 
   constructor(
     private route: ActivatedRoute,
-    private postsService: PostsService
-  ) { }
+    private postsService: PostsService,
+    private alert: AlertService
+  ) {}
 
   ngOnInit() {
     this.route.params.pipe(
       switchMap((params: Params) => {
-        return this.postsService.getById(params['id'])
+        return this.postsService.getById(params['id']);
       })
     ).subscribe((post: Post) => {
-      this.post = post
+      this.post = post;
       this.form = new FormGroup({
         title: new FormControl(post.title, Validators.required),
         text: new FormControl(post.text, Validators.required)
-      })
-    })
+      });
+    });
   }
 
   ngOnDestroy() {
     if (this.uSub) {
-      this.uSub.unsubscribe()
+      this.uSub.unsubscribe();
     }
   }
 
   submit() {
     if (this.form.invalid) {
-      return
+      return;
     }
 
-    this.submitted = true
+    this.submitted = true;
 
     this.uSub = this.postsService.update({
       ...this.post,
       text: this.form.value.text,
       title: this.form.value.title
     }).subscribe(() => {
-      this.submitted = false
-    })
+      this.submitted = false;
+      this.alert.success('Пост был обновлен')
+    });
   }
 }
